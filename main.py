@@ -30,12 +30,13 @@ class LineDetector:
             prog="Line Detection",
             usage=self.usage
         )
-        arg_parser.add_argument('-filepath', nargs=1, default=['.\\images\\image002.png'])
+        arg_parser.add_argument('-filepath', nargs=1,
+                                default=['.\\images\\image002.png'])
         arg_parser.add_argument('-img_dir', nargs=1, default=[''])
-        arg_parser.add_argument('-preprocess', action='store_true', default=False)
+        arg_parser.add_argument(
+            '-preprocess', action='store_true', default=False)
         arg_parser.add_argument('-block', action='store_true', default=False)
         arg_parser.add_argument('-debug_path', nargs=1, default=[''])
-        
 
         try:
             # Parse command line arguments
@@ -55,17 +56,13 @@ class LineDetector:
         return filepath, img_dir, preprocess, block, debug_path
 
     def preprocess_img(self, filename, img):
-        """
-        Preprocesses the image by normalizing it, applying noise reduction, 
-        thinning and skeletonization, converting to grayscale, and thresholding.
-        """
         # Normalize image
         norm_img = np.zeros((img.shape[0], img.shape[1]))
         img = cv2.normalize(img, norm_img, 0, 255, cv2.NORM_MINMAX)
 
         # Apply noise reduction
         img = cv2.fastNlMeansDenoisingColored(img, None, 10, 10, 7, 15)
-        
+
         # Thinning and skeletonization
         kernel = np.ones((1, 1), np.uint8)
         img = cv2.erode(img, kernel, iterations=1)
@@ -74,7 +71,8 @@ class LineDetector:
         img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
         # Threshold image
-        img = cv2.threshold(img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
+        img = cv2.threshold(
+            img, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)[1]
 
         # Show and save preprocessed image if debug_path argument is passed
         if self.debug_path:
@@ -86,7 +84,8 @@ class LineDetector:
     def startLineDetection(self):
         linesData = []
         if self.img_dir:
-            img_files = glob(f'{self.img_dir}\\*.png') + glob(f'{self.img_dir}\\*.jpg')
+            img_files = glob(f'{self.img_dir}\\*.png') + \
+                glob(f'{self.img_dir}\\*.jpg')
             for img in img_files:
                 tmpLinesData = self.processImage(img)
                 linesData.append(tmpLinesData)
@@ -94,7 +93,6 @@ class LineDetector:
             tmpLinesData = self.processImage(self.filepath)
             linesData.append(tmpLinesData)
         return linesData
-
 
     def processImage(self, filepath):
         filename = self.filepath.split("\\")[-1]
@@ -107,12 +105,12 @@ class LineDetector:
             img = self.preprocess_img(filename, original_img)
         else:
             img = original_img
-    
+
         # Perform line detection
         config = f'-l eng+por+frk+deu+srp_latn --psm {6 if self.block else 3}'
         d = pytesseract.image_to_data(
             img, output_type='dict', config=config)
-        
+
         # array with file name, the number of detected lines and their information
         linesData = [filename, 0]
 
@@ -132,18 +130,21 @@ class LineDetector:
         if self.debug_path:
             cv2.imshow('line detection on img', original_img)
             cv2.waitKey(0)
-            cv2.imwrite(f"{self.debug_path}\\lineDetection_{'block_' if self.block else ''}{filename}", original_img)
-        
+            cv2.imwrite(
+                f"{self.debug_path}\\lineDetection_{'block_' if self.block else ''}{filename}", original_img)
+
         return linesData
-    
+
     def printLinesData(self, allLinesData):
         for linesData in allLinesData:
-            print(f"\nLine Detection on the image {linesData[0]}{' with preprocessing' if self.preprocess else ''}{' considering the page as a single block of text' if self.block else ''}")
+            print(
+                f"\nLine Detection on the image {linesData[0]}{' with preprocessing' if self.preprocess else ''}{' considering the page as a single block of text' if self.block else ''}")
             print(f"Number of detected lines: {linesData[1]}")
             if linesData[1]:
                 print("Array containing lines (each line is a rectangle defined by a dot x and y coordinates followed by its width and height):")
                 for i, line in enumerate(linesData[2:]):
-                    print(f"Line {i} - (x, y): ({line[0]}, {line[1]}), (width, height): ({line[2]}, {line[3]})")
+                    print(
+                        f"Line {i} - (x, y): ({line[0]}, {line[1]}), (width, height): ({line[2]}, {line[3]})")
 
 
 if __name__ == "__main__":
